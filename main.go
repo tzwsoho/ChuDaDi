@@ -61,7 +61,7 @@ func (c Card) String() string {
 		cardNumber = "10"
 	}
 
-	return c.Flush.String() + " " + cardNumber
+	return c.Flush.String() + cardNumber
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -155,7 +155,7 @@ func PrintPlayersCards() {
 		var n int
 		for j, card := range Players[i].Cards {
 			if !card.Played {
-				fmt.Printf("%-2d - %-4s(%t)\t\t", j, card, card.Played)
+				fmt.Printf("%-2d - %-4s\t\t", j, card)
 
 				n++
 				if 0 == n%4 {
@@ -563,6 +563,7 @@ func AfterPlayed(cards CardGroup) bool {
 	Players[CurrentPlayerIndex].CardsLeft -= cards.Len()
 	if Players[CurrentPlayerIndex].CardsLeft <= 0 {
 		fmt.Printf("玩家 %d 胜出！\n", CurrentPlayerIndex)
+		fmt.Println(strings.Repeat("-\\|/", 25))
 		return true
 	}
 
