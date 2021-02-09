@@ -55,7 +55,7 @@ func InitAll() {
 // Shuffle 洗牌
 func Shuffle() {
 	// 1612779063003819500 玩家 3 同花顺
-	// now := int64(1612841984421453000)
+	// now := int64(1612853908550452700)
 	now := time.Now().UnixNano()
 	fmt.Printf("本轮随机种子：%d\n", now)
 

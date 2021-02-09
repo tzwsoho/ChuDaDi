@@ -179,7 +179,7 @@ func CompareCardGroup(prev, cur model.CardGroup) bool {
 	return false
 }
 
-// AutoPass 如果上一轮出的牌比其他任何牌都要大，则自动通过
+// AutoPass 如果上一轮出的牌比其他任何牌都要大，或比其他人持有牌的数量要多，则自动通过
 func AutoPass(prev model.CardGroup) bool {
 	sort.Sort(prev)
 	gtPrev, _ := CheckGroupType(prev)
@@ -208,6 +208,19 @@ func AutoPass(prev model.CardGroup) bool {
 		if IsSpadeA(prev[4]) {
 			return true
 		}
+	}
+
+	// 上一轮打出的牌是否比其他玩家手上持有的牌都要多
+	var found bool
+	for i := 0; i < len(Players); i++ {
+		if prev.Len() < Players[i].CardsLeft {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return true
 	}
 
 	// TODO 比未出的所有牌大也算最大

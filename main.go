@@ -145,7 +145,7 @@ func main() {
 
 		// 开始出牌
 		for {
-			<-time.After(time.Millisecond * 50)
+			<-time.After(time.Millisecond * 10)
 
 			var cards model.CardGroup
 			if rules.GetCurPlayer().IsHuman { // 真人玩家出牌
@@ -170,7 +170,7 @@ func main() {
 			}
 
 			if AfterPlayed(cards) { // true: 有玩家胜出
-				os.Exit(0)
+				// os.Exit(0)
 				break
 			}
 
@@ -192,10 +192,10 @@ func main() {
 				}
 			}
 
-			if 0 == rules.CurrentPlayerIndex {
-				fmt.Println(strings.Repeat("-", 100))
-				rules.PrintPlayersCards()
-			}
+			// if 0 == rules.CurrentPlayerIndex {
+			// 	fmt.Println(strings.Repeat("-", 100))
+			// 	rules.PrintPlayersCards()
+			// }
 		}
 	}
 }
