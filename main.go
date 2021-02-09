@@ -40,11 +40,11 @@ func AfterPlayed(cards model.CardGroup) bool {
 
 	rules.Players[rules.CurrentPlayerIndex].CardsLeft -= cards.Len()
 	if rules.Players[rules.CurrentPlayerIndex].CardsLeft <= 0 {
-		fmt.Printf("%s玩家 %d 胜出！%s\n",
-			strings.Repeat("*", 30),
+		fmt.Println(strings.Repeat("-\\|/", 25))
+		fmt.Printf("%s    玩家 %d 胜出！   %s\n",
+			strings.Repeat("*", 40),
 			rules.CurrentPlayerIndex,
-			strings.Repeat("*", 30))
-
+			strings.Repeat("*", 40))
 		fmt.Println(strings.Repeat("-\\|/", 25))
 		return true
 	}
@@ -145,7 +145,7 @@ func main() {
 
 		// 开始出牌
 		for {
-			<-time.After(time.Millisecond * 100)
+			<-time.After(time.Millisecond * 50)
 
 			var cards model.CardGroup
 			if rules.GetCurPlayer().IsHuman { // 真人玩家出牌

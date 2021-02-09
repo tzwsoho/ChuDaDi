@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"sort"
+	"time"
 )
 
 // AllCards 所有 52 张牌（没有大小鬼/小丑/大王）
@@ -54,8 +55,8 @@ func InitAll() {
 // Shuffle 洗牌
 func Shuffle() {
 	// 1612779063003819500 玩家 3 同花顺
-	now := int64(1612841984421453000)
-	// now := time.Now().UnixNano()
+	// now := int64(1612841984421453000)
+	now := time.Now().UnixNano()
 	fmt.Printf("本轮随机种子：%d\n", now)
 
 	rand.Seed(now)

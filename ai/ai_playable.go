@@ -34,13 +34,11 @@ func (ai Playable) PickupGroup(cards, prev model.CardGroup, gt model.GroupTypes,
 		for {
 			var found bool
 			for i := index + 1; i < cards.Len()-1; i++ {
-				if nil != withCard && withCard.Number == cards[i].Number {
-					if cards.GetByNumber(cards[i].Number, i).Len() >= 2 {
-						index = i
-						found = true
-						break
-					}
-				} else if cards.GetByNumber(cards[i].Number, i).Len() >= 2 {
+				if nil != withCard && !withCard.Equals(cards[i]) {
+					continue
+				}
+
+				if cards.GetByNumber(cards[i].Number, i).Len() >= 2 {
 					index = i
 					found = true
 					break
@@ -71,13 +69,11 @@ func (ai Playable) PickupGroup(cards, prev model.CardGroup, gt model.GroupTypes,
 		for {
 			var found bool
 			for i := index + 1; i < cards.Len()-2; i++ {
-				if nil != withCard && withCard.Number == cards[i].Number {
-					if cards.GetByNumber(cards[i].Number, i).Len() >= 3 {
-						index = i
-						found = true
-						break
-					}
-				} else if cards.GetByNumber(cards[i].Number, i).Len() >= 3 {
+				if nil != withCard && !withCard.Equals(cards[i]) {
+					continue
+				}
+
+				if cards.GetByNumber(cards[i].Number, i).Len() >= 3 {
 					index = i
 					found = true
 					break
@@ -108,13 +104,11 @@ func (ai Playable) PickupGroup(cards, prev model.CardGroup, gt model.GroupTypes,
 		for {
 			var found bool
 			for i := index + 1; i < cards.Len()-3; i++ {
-				if nil != withCard && withCard.Number == cards[i].Number {
-					if cards.GetByNumber(cards[i].Number, i).Len() >= 4 {
-						index = i
-						found = true
-						break
-					}
-				} else if cards.GetByNumber(cards[i].Number, i).Len() >= 4 {
+				if nil != withCard && !withCard.Equals(cards[i]) {
+					continue
+				}
+
+				if cards.GetByNumber(cards[i].Number, i).Len() >= 4 {
 					index = i
 					found = true
 					break
@@ -153,12 +147,9 @@ func (ai Playable) PickupGroup(cards, prev model.CardGroup, gt model.GroupTypes,
 			}
 
 			if has {
-				if nil != withCard &&
-					(withCard.Number != cards[i].Number || withCard.Flush != cards[i].Flush) &&
-					(withCard.Number != ret[1][0].Number || withCard.Flush != ret[1][0].Flush) &&
-					(withCard.Number != ret[2][0].Number || withCard.Flush != ret[2][0].Flush) &&
-					(withCard.Number != ret[3][0].Number || withCard.Flush != ret[3][0].Flush) &&
-					(withCard.Number != ret[4][0].Number || withCard.Flush != ret[4][0].Flush) {
+				if nil != withCard && !withCard.Equals(cards[i]) &&
+					!withCard.Equals(ret[1][0]) && !withCard.Equals(ret[2][0]) &&
+					!withCard.Equals(ret[3][0]) && !withCard.Equals(ret[4][0]) {
 					continue
 				}
 
@@ -182,12 +173,9 @@ func (ai Playable) PickupGroup(cards, prev model.CardGroup, gt model.GroupTypes,
 
 		for i := 0; i < len(indices); i++ {
 			if len(indices[i]) >= 5 {
-				if nil != withCard &&
-					(withCard.Number != cards[indices[i][0]].Number || withCard.Flush != cards[indices[i][0]].Flush) &&
-					(withCard.Number != cards[indices[i][1]].Number || withCard.Flush != cards[indices[i][1]].Flush) &&
-					(withCard.Number != cards[indices[i][2]].Number || withCard.Flush != cards[indices[i][2]].Flush) &&
-					(withCard.Number != cards[indices[i][3]].Number || withCard.Flush != cards[indices[i][3]].Flush) &&
-					(withCard.Number != cards[indices[i][4]].Number || withCard.Flush != cards[indices[i][4]].Flush) {
+				if nil != withCard && !withCard.Equals(cards[indices[i][0]]) &&
+					!withCard.Equals(cards[indices[i][1]]) && !withCard.Equals(cards[indices[i][2]]) &&
+					!withCard.Equals(cards[indices[i][3]]) && !withCard.Equals(cards[indices[i][4]]) {
 					continue
 				}
 
@@ -206,7 +194,7 @@ func (ai Playable) PickupGroup(cards, prev model.CardGroup, gt model.GroupTypes,
 			cards1 := cards.GetByNumber(cards[i].Number, i)
 			if cards1.Len() >= 3 { // 已找到三张牌组
 				// 查找一对牌来搭配打出
-				for j := 0; j < cards.Len(); j++ {
+				for j := 0; j < cards.Len()-1; j++ {
 					// 不能使用和三张牌组一样点数的牌
 					if cards[j].Number == cards[i].Number {
 						continue
@@ -214,6 +202,13 @@ func (ai Playable) PickupGroup(cards, prev model.CardGroup, gt model.GroupTypes,
 
 					cards2 := cards.GetByNumber(cards[j].Number, j)
 					if cards2.Len() >= 2 {
+						if nil != withCard && !withCard.Equals(cards1[0]) &&
+							!withCard.Equals(cards1[1]) && !withCard.Equals(cards1[2]) &&
+							!withCard.Equals(cards2[0]) && !withCard.Equals(cards2[1]) {
+							j++
+							continue
+						}
+
 						return model.CardGroup{
 							cards1[0],
 							cards1[1],
@@ -237,6 +232,12 @@ func (ai Playable) PickupGroup(cards, prev model.CardGroup, gt model.GroupTypes,
 					// 不能使用和四张牌组一样点数的牌
 					if cards[j].Number == cards[i].Number {
 						continue
+					}
+
+					if nil != withCard && !withCard.Equals(cardsQuadra[0]) &&
+						!withCard.Equals(cardsQuadra[1]) && !withCard.Equals(cardsQuadra[2]) &&
+						!withCard.Equals(cardsQuadra[3]) && !withCard.Equals(cards[j]) {
+						return nil, -1
 					}
 
 					return model.CardGroup{
@@ -269,6 +270,12 @@ func (ai Playable) PickupGroup(cards, prev model.CardGroup, gt model.GroupTypes,
 						cards[indices[i][j+1]].Number == cards[indices[i][j+2]].Number-1 &&
 						cards[indices[i][j+2]].Number == cards[indices[i][j+3]].Number-1 &&
 						cards[indices[i][j+3]].Number == cards[indices[i][j+4]].Number-1 {
+						if nil != withCard && !withCard.Equals(cards[indices[i][0]]) &&
+							!withCard.Equals(cards[indices[i][1]]) && !withCard.Equals(cards[indices[i][2]]) &&
+							!withCard.Equals(cards[indices[i][3]]) && !withCard.Equals(cards[indices[i][4]]) {
+							continue
+						}
+
 						return model.CardGroup{
 							cards[indices[i][0]],
 							cards[indices[i][1]],
@@ -293,9 +300,9 @@ func (ai Playable) PickupMost(cards model.CardGroup) model.CardGroup {
 		model.GroupTypesStraight,
 		model.GroupTypesFlush,
 		model.GroupTypesFull,
-		model.GroupTypesTriple,
 		model.GroupTypesPair,
 		model.GroupTypesSingle,
+		model.GroupTypesTriple,
 	}
 
 	var card *model.Card
