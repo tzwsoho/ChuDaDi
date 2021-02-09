@@ -5,6 +5,7 @@ type Player struct {
 	Index     int
 	Name      string
 	Avatar    int
+	IsHuman   bool
 	CardsLeft int
 	Cards     CardGroup
 }

@@ -1,10 +1,25 @@
-package main
+package rules
 
 import (
 	"ChuDaDi/model"
 	"fmt"
 	"sort"
 )
+
+// IsDiamond3 是否 ♦3
+func IsDiamond3(card *model.Card) bool {
+	return 0 == card.Number && model.FlushesDiamonds == card.Flush
+}
+
+// IsSpade2 是否 ♠2
+func IsSpade2(card *model.Card) bool {
+	return 12 == card.Number && model.FlushesSpades == card.Flush
+}
+
+// IsSpadeA 是否 ♠A
+func IsSpadeA(card *model.Card) bool {
+	return 11 == card.Number && model.FlushesSpades == card.Flush
+}
 
 // CheckGroupType 出牌的类型和最大牌的点数（顺子/同花顺/三带二/四带一时有效）
 func CheckGroupType(cards model.CardGroup) (model.GroupTypes, int) {
@@ -89,34 +104,12 @@ func CheckGroupType(cards model.CardGroup) (model.GroupTypes, int) {
 		} else if model.GroupTypesFlush == gt2 { // 同花
 			return model.GroupTypesFlush, -1
 		} else { // 不是顺子也不是同花
-			var (
-				cardNo1 int = cards[0].Number
-				cards1  int = 1
-				cardNo2 int = -1
-				cards2  int = 0
-			)
-
-			for i := 1; i < cards.Len(); i++ {
-				if cards[i].Number == cardNo1 { // 累加相同点数牌的数量
-					cards1++
-				} else if -1 == cardNo2 { // 出现一种不同点数的牌
-					cards2++
-					cardNo2 = cards[i].Number
-				} else if cardNo2 == cards[i].Number { // 累加相同点数牌的数量
-					cards2++
-				} else { // 出现第三种不同点数的牌，不符合出牌规则
-					return model.GroupTypesInvalid, -1
+			for i := 0; i < cards.Len()-2; i++ {
+				if 3 == cards.GetByNumber(cards[i].Number, 0).Len() { // 葫芦/夫佬/俘虏（Full House）：三张点数相同带二张点数相同
+					return model.GroupTypesFull, cards[i].Number
+				} else if 4 == cards.GetByNumber(cards[i].Number, 0).Len() { // 金刚/铁扇（Four-of-a-kind）：四张点数相同带另一张牌
+					return model.GroupTypesFourOfAKind, cards[i].Number
 				}
-			}
-
-			if 3 == cards1 { // 葫芦/夫佬/俘虏（Full House）：三个点数相同带二个点数相同
-				return model.GroupTypesFull, cardNo1
-			} else if 3 == cards2 {
-				return model.GroupTypesFull, cardNo2
-			} else if 4 == cards1 { // 金刚/铁扇（Four-of-a-kind）：四个点数相同带另一张牌
-				return model.GroupTypesFourOfAKind, cardNo1
-			} else if 4 == cards2 {
-				return model.GroupTypesFourOfAKind, cardNo2
 			}
 		}
 	}
@@ -222,7 +215,7 @@ func AutoPass(prev model.CardGroup) bool {
 }
 
 // CheckCanPlay 是否可出牌
-func CheckCanPlay(prev, cur model.CardGroup) bool {
+func CheckCanPlay(cards, prev, cur model.CardGroup) bool {
 	// 本轮不出牌
 	if nil == cur {
 		return true
@@ -249,7 +242,7 @@ func CheckCanPlay(prev, cur model.CardGroup) bool {
 	}
 
 	if nil == prev { // 刚开局/上一轮无人出牌/上一轮出的牌比所有人的牌都大
-		if IsDiamond3(Players[CurrentPlayerIndex].Cards[0]) && !hasDiamond3 { // 开局出牌中必须带有 ♦3
+		if IsDiamond3(cards[0]) && !hasDiamond3 { // 开局出牌中必须带有 ♦3
 			fmt.Println("开局出牌中必须带有 ♦3 ！")
 			return false
 		}

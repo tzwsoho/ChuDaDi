@@ -1,4 +1,4 @@
-package main
+package rules
 
 import (
 	"fmt"
@@ -26,7 +26,7 @@ func PrintPlayersCards() {
 			fmt.Print("----> ")
 		}
 
-		fmt.Printf("Player %d:\n", i)
+		fmt.Printf("玩家 %d(是否真人：%t):\n", i, Players[i].IsHuman)
 
 		var n int
 		for j, card := range Players[i].Cards {

@@ -1,39 +1,19 @@
 package main
 
 import (
+	"ChuDaDi/ai"
 	"ChuDaDi/model"
+	"ChuDaDi/rules"
 	"bufio"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// AllCards 所有 52 张牌（没有大小鬼/小丑/大王）
-var AllCards model.CardGroup
-
-// PrevCards 上一轮玩家出的牌
-var PrevCards model.CardGroup
-
-// PrevPlayerIndex 最后出牌玩家的索引
-var PrevPlayerIndex int = -1
-
-// Players 所有 4 名玩家
-var Players [4]model.Player
-
-// CurrentPlayerIndex 当前出牌玩家的索引
-var CurrentPlayerIndex int = -1
 
 // PassCount 不出牌的玩家数量，不超过 3 人
 var PassCount int
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // AfterPlayed 出牌后的规则处理
 func AfterPlayed(cards model.CardGroup) bool {
@@ -42,8 +22,8 @@ func AfterPlayed(cards model.CardGroup) bool {
 	}
 
 	if nil != cards {
-		PrevCards = cards
-		PrevPlayerIndex = CurrentPlayerIndex
+		rules.PrevCards = cards
+		rules.PrevPlayerIndex = rules.CurrentPlayerIndex
 	}
 
 	if 0 == cards.Len() { // 没人出牌
@@ -51,18 +31,18 @@ func AfterPlayed(cards model.CardGroup) bool {
 
 		// 三个玩家都不出牌，又轮到自己出牌
 		if PassCount >= 3 {
-			PrevCards = nil
-			PrevPlayerIndex = -1
+			rules.PrevCards = nil
+			rules.PrevPlayerIndex = -1
 		}
 	} else {
 		PassCount = 0
 	}
 
-	Players[CurrentPlayerIndex].CardsLeft -= cards.Len()
-	if Players[CurrentPlayerIndex].CardsLeft <= 0 {
+	rules.Players[rules.CurrentPlayerIndex].CardsLeft -= cards.Len()
+	if rules.Players[rules.CurrentPlayerIndex].CardsLeft <= 0 {
 		fmt.Printf("%s玩家 %d 胜出！%s\n",
 			strings.Repeat("*", 30),
-			CurrentPlayerIndex,
+			rules.CurrentPlayerIndex,
 			strings.Repeat("*", 30))
 
 		fmt.Println(strings.Repeat("-\\|/", 25))
@@ -87,21 +67,21 @@ func Play(cards model.CardGroup, mustPlay bool) bool {
 	}
 
 	// 出牌数不能多于玩家持有牌数
-	if cards.Len() > Players[CurrentPlayerIndex].CardsLeft {
+	if cards.Len() > rules.GetCurPlayer().CardsLeft {
 		fmt.Println("出牌数不能多于玩家持有牌数！")
 		return false
 	}
 
-	return CheckCanPlay(PrevCards, cards)
+	return rules.CheckCanPlay(rules.GetCurCards().NotPlayed(), rules.PrevCards, cards)
 }
 
 // GetCards 让玩家选择要出的牌
 func GetCards() model.CardGroup {
-	if -1 != PrevPlayerIndex {
-		fmt.Printf("上一轮玩家 %d 打出了：%s\n", PrevPlayerIndex, PrevCards)
+	if -1 != rules.PrevPlayerIndex {
+		fmt.Printf("上一轮玩家 %d 打出了：%s\n", rules.PrevPlayerIndex, rules.PrevCards)
 	}
 
-	fmt.Printf("现在轮到玩家 %d 开始出牌\n请输入牌前面的数字，用空格隔开，或直接按下回车不出牌：\n", CurrentPlayerIndex)
+	fmt.Printf("现在轮到玩家 %d 开始出牌\n请输入牌前面的数字，用空格隔开，或直接按下回车不出牌：\n", rules.CurrentPlayerIndex)
 
 	var (
 		strIndices string
@@ -126,63 +106,96 @@ func GetCards() model.CardGroup {
 			continue
 		}
 
-		if cardIndex < 0 || cardIndex >= Players[CurrentPlayerIndex].Cards.Len() {
+		if cardIndex < 0 || cardIndex >= rules.GetCurCards().Len() {
 			continue
 		}
 
-		cards = append(cards, Players[CurrentPlayerIndex].Cards[cardIndex])
+		cards = append(cards, rules.GetCurCards()[cardIndex])
 	}
 
 	return cards
 }
 
 func main() {
+	AI := ai.NewAI(ai.AITypesPlayable).(*ai.Playable)
+
 	for {
 		// 初始化
-		Init()
-		// PrintAllCards()
+		rules.InitAll()
+		// rules.PrintAllCards()
 
 		// 洗牌
-		Shuffle()
-		// PrintAllCards()
+		rules.Shuffle()
+		// rules.PrintAllCards()
 
 		// 发牌
-		DealOut()
-		PrintPlayersCards()
+		rules.DealOut()
+
+		// 设置三人为 AI 玩家，一人为真人玩家
+		// n := rand.Intn(len(rules.Players))
+		for i := 0; i < len(rules.Players); i++ {
+			// if 0 == (i+n)%4 {
+			// rules.Players[i].IsHuman = true
+			// } else {
+			rules.Players[i].IsHuman = false
+			// }
+		}
+
+		rules.PrintPlayersCards()
 
 		// 开始出牌
 		for {
-			cards := GetCards()
-			fmt.Printf("玩家 %d 打出了：%s\n", CurrentPlayerIndex, cards)
+			<-time.After(time.Millisecond * 100)
 
-			if !Play(cards, nil == PrevCards) {
+			var cards model.CardGroup
+			if rules.GetCurPlayer().IsHuman { // 真人玩家出牌
+				cards = GetCards()
+			} else { // 电脑出牌
+				now := time.Now().UnixNano()
+				cards = AI.Play(rules.GetCurCards().NotPlayed(), rules.PrevCards)
+				delta := time.Now().UnixNano() - now
+				if delta > 0 {
+					fmt.Printf("耗时 %d ns\n", delta)
+				}
+			}
+
+			if nil == cards {
+				fmt.Printf("玩家 %d 不出牌\n", rules.CurrentPlayerIndex)
+			} else {
+				fmt.Printf("玩家 %d 打出了：%s\n", rules.CurrentPlayerIndex, cards)
+			}
+
+			if !Play(cards, nil == rules.PrevCards) {
 				continue
 			}
 
 			if AfterPlayed(cards) { // true: 有玩家胜出
+				os.Exit(0)
 				break
 			}
 
-			if AutoPass(PrevCards) {
-				PrevCards = nil
-				PrevPlayerIndex = -1
-				fmt.Printf("玩家 %d 的出牌最大，其他人没有出牌机会，请继续出牌。。。\n", CurrentPlayerIndex)
+			if rules.AutoPass(rules.PrevCards) {
+				rules.PrevCards = nil
+				rules.PrevPlayerIndex = -1
+				fmt.Printf("玩家 %d 的出牌最大，其他人没有出牌机会，请继续出牌。。。\n", rules.CurrentPlayerIndex)
 				continue
 			} else {
-				CurrentPlayerIndex = (CurrentPlayerIndex + 1) % 4
+				rules.CurrentPlayerIndex = (rules.CurrentPlayerIndex + 1) % 4
 
 				// 跳过手上持有牌数少于出牌数的玩家
 				for {
-					if PrevCards.Len() > Players[CurrentPlayerIndex].CardsLeft {
-						CurrentPlayerIndex = (CurrentPlayerIndex + 1) % 4
+					if rules.PrevCards.Len() > rules.GetCurPlayer().CardsLeft {
+						rules.CurrentPlayerIndex = (rules.CurrentPlayerIndex + 1) % 4
 					} else {
 						break
 					}
 				}
 			}
 
-			fmt.Println(strings.Repeat("-", 100))
-			PrintPlayersCards()
+			if 0 == rules.CurrentPlayerIndex {
+				fmt.Println(strings.Repeat("-", 100))
+				rules.PrintPlayersCards()
+			}
 		}
 	}
 }

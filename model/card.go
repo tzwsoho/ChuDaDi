@@ -18,3 +18,8 @@ func (c Card) String() string {
 
 	return c.Flush.String() + cardNumber
 }
+
+// Equal 对比两张牌是否相同s
+func (c Card) Equal(cc Card) bool {
+	return c.Number == cc.Number && c.Flush == cc.Flush
+}

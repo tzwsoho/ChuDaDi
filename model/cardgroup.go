@@ -1,5 +1,7 @@
 package model
 
+import "sort"
+
 // GroupTypes 牌组类型
 type GroupTypes int
 
@@ -53,4 +55,29 @@ func (cg CardGroup) String() string {
 	}
 
 	return s
+}
+
+// NotPlayed 获取未打出的牌
+func (cg CardGroup) NotPlayed() CardGroup {
+	var cgNP CardGroup
+	for _, card := range cg {
+		if !card.Played {
+			cgNP = append(cgNP, card)
+		}
+	}
+
+	sort.Sort(cgNP)
+	return cgNP
+}
+
+// GetByNumber 根据牌的点数筛选对应的牌
+func (cg CardGroup) GetByNumber(number int, offset int) CardGroup {
+	var cards CardGroup
+	for i := offset; i < cg.Len(); i++ {
+		if number == cg[i].Number {
+			cards = append(cards, cg[i])
+		}
+	}
+
+	return cards
 }
